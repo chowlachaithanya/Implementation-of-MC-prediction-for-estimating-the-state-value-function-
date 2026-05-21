@@ -56,13 +56,122 @@ Monte Carlo methods calculate the average return obtained after visiting a state
 
 ## Program
 
-```python
+```
+import numpy as np
+import matplotlib.pyplot as plt
+from collections import defaultdict
+import gymnasium as gym
+
+# Create Environment
+env = gym.make("FrozenLake-v1", is_slippery=False)
+
+# Parameters
+gamma = 0.9
+episodes = 5000
+
+# State Value Function
+V = defaultdict(float)
+
+# Returns storage
+returns = defaultdict(list)
+
+# Random Policy
+def policy(state):
+    return env.action_space.sample()
+
+# Generate Episode
+def generate_episode():
+
+    episode = []
+
+    # Reset environment
+    state, info = env.reset()
+
+    done = False
+
+    while not done:
+
+        action = policy(state)
+
+        # Take action
+        next_state, reward, terminated, truncated, info = env.step(action)
+
+        done = terminated or truncated
+
+        # Store transition
+        episode.append((state, action, reward))
+
+        state = next_state
+
+    return episode
+
+# Monte Carlo Prediction
+for ep in range(episodes):
+
+    episode = generate_episode()
+
+    G = 0
+    visited_states = set()
+
+    # Traverse episode backward
+    for t in reversed(range(len(episode))):
+
+        state, action, reward = episode[t]
+
+        G = gamma * G + reward
+
+        # First-Visit MC
+        if state not in visited_states:
+
+            returns[state].append(G)
+
+            V[state] = np.mean(returns[state])
+
+            visited_states.add(state)
+
+# Print State Values
+print("\nState Value Function:\n")
+
+for s in range(env.observation_space.n):
+    print(f"State {s}: {V[s]:.3f}")
+
+# Convert values to 4x4 grid
+value_grid = np.zeros((4, 4))
+
+for state in range(16):
+
+    row = state // 4
+    col = state % 4
+
+    value_grid[row, col] = V[state]
+
+# Plot Value Function
+plt.figure(figsize=(6,6))
+
+plt.imshow(value_grid, cmap='coolwarm')
+
+# Add values on grid
+for i in range(4):
+    for j in range(4):
+
+        plt.text(
+            j,
+            i,
+            round(value_grid[i, j], 2),
+            ha='center',
+            va='center',
+            color='black',
+            fontsize=12
+        )
+
+plt.title("State Value Function Estimate")
+plt.colorbar()
+plt.show()
 ```
 ## Output
+<img width="895" height="443" alt="{CC12469C-22E5-42F9-BDDB-A98912011FAB}" src="https://github.com/user-attachments/assets/2b92726e-c540-459f-b574-fe0c9055419b" />
+<img width="696" height="603" alt="{77E9AF3F-9EA7-44FD-802D-E0C309EA8D64}" src="https://github.com/user-attachments/assets/d624ba21-8c64-4d7b-b9c7-58eada64f1ea" />
 
-```text
-
-```
 
 ### Output Graph
 
